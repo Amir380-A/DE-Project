@@ -19,3 +19,11 @@ models:
             tests:
                 - unique
                 - not_null
+
+    - name: my_first_model
+      description: "Just a test model for Redshift"
+      columns:
+        - name: message
+          description: "Greeting message"
+        - name: today
+          description: "Current date"
