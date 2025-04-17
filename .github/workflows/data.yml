@@ -1,0 +1,51 @@
+name: Run dbt Models
+
+on:
+  push:
+    branches:
+      - main 
+  workflow_dispatch:
+
+jobs:
+  run-dbt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dbt Redshift adapter
+        run: |
+          pip install dbt-redshift
+
+      - name: Run dbt
+        env:
+          DBT_USER: ${{ secrets.DBT_USER }}
+          DBT_PASSWORD: ${{ secrets.DBT_PASSWORD }}
+          DBT_HOST: analytics-workgroup.663400901118.us-east-1.redshift-serverless.amazonaws.com
+          DBT_DB: dev
+          DBT_SCHEMA: dbt
+        run: |
+          export DBT_PROFILES_DIR=$(pwd)
+          cat <<EOF > profiles.yml
+          my_project:
+            target: prod
+            outputs:
+              prod:
+                type: redshift
+                host: $DBT_HOST
+                user: $DBT_USER
+                password: $DBT_PASSWORD
+                port: 5439
+                dbname: dev
+                schema: dbt
+                threads: 4
+                ssl: true
+          EOF
+          dbt deps
+          dbt run
